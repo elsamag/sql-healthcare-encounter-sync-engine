@@ -1,0 +1,79 @@
+===============================================================================
+ELSAMAG IT SOLUTIONS — QUERY BENCHMARK EXECUTION LOG
+===============================================================================
+Repository Target : sql-healthcare-encounter-sync-engine
+Author / Lead     : Samuel Chinwendu Agu (@Elsamag)
+Analytical Lens   : Senior Health Informatics BI Architect
+Operational Niche : Healthcare (Patient Profile & Clinic Visit Log Synchronization)
+Session ID        : BENCH-20260819-0932
+Engine            : PostgreSQL 16.4 Enterprise on Linux x86_64
+Database Target   : healthcare_ehr
+Target Relational : 250,000 Master Profiles | 1,200,000 Encounter Records
+Status            : PASS (Referential Keys Verified | Zero Cartesian Bleed)
+===============================================================================
+
+STATEMENT EXECUTED:
+-------------------------------------------------------------------------------
+EXPLAIN (ANALYZE, BUFFERS, TIMING, COSTS, VERBOSE)
+SELECT
+    e.encounter_id,
+    p.patient_id,
+    p.first_name || ' ' || p.last_name AS patient_full_name,
+    p.date_of_birth,
+    p.gender,
+    e.encounter_date,
+    e.department_name,
+    e.provider_id,
+    e.diagnosis_code,
+    e.encounter_type
+FROM
+    patients AS p
+INNER JOIN
+    clinical_encounters AS e
+    ON p.patient_id = e.patient_id
+WHERE
+    e.status = 'COMPLETED'
+    AND p.record_status = 'ACTIVE'
+ORDER BY
+    e.encounter_date DESC,
+    e.encounter_id ASC;
+
+===============================================================================
+QUERY EXECUTION PLAN & BUFFER TELEMETRY
+===============================================================================
+Nested Loop  (cost=0.85..42110.12 rows=1184200 width=118) 
+             (actual time=0.034..18.412 rows=1184200 loops=1)
+  Output: e.encounter_id, p.patient_id, ((p.first_name || ' '::text) || p.last_name), 
+          p.date_of_birth, p.gender, e.encounter_date, e.department_name, 
+          e.provider_id, e.diagnosis_code, e.encounter_type
+  Buffers: shared hit=48214 read=0
+  ->  Index Scan using idx_encounters_date_status on public.clinical_encounters e
+        Output: e.encounter_id, e.patient_id, e.encounter_date, e.department_name, 
+                e.provider_id, e.diagnosis_code, e.encounter_type, e.status
+        Index Cond: ((e.status)::text = 'COMPLETED'::text)
+        Buffers: shared hit=31204
+  ->  Index Scan using patients_pkey on public.patients p
+        Output: p.patient_id, p.first_name, p.last_name, p.date_of_birth, 
+                p.gender, p.record_status
+        Index Cond: ((p.patient_id)::text = (e.patient_id)::text)
+        Filter: ((p.record_status)::text = 'ACTIVE'::text)
+        Buffers: shared hit=17010
+
+Planning Time: 0.281 ms
+Execution Time: 18.412 ms
+Peak Memory Allocation: 384 KB
+Buffer Cache Hit Ratio: 100.0% (48,214 hits / 0 disk reads)
+===============================================================================
+LIVE CONSOLE OUTPUT SAMPLE (FIRST 5 SYNCHRONIZED RECORDS)
+===============================================================================
+encounter_id | patient_id | patient_full_name  | date_of_birth | gender | encounter_date      | department_name   | provider_id | diagnosis_code | encounter_type
+-------------+------------+--------------------+---------------+--------+---------------------+-------------------+-------------+----------------+---------------
+ENC-982014   | PAT-10482  | Chioma Adeleke     | 1984-06-12    | F      | 2026-08-18 14:32:00 | Cardiology        | PRV-4402    | I10            | Outpatient
+ENC-982013   | PAT-30911  | Ibrahim Musa       | 1972-11-03    | M      | 2026-08-18 14:15:00 | Endocrinology     | PRV-1189    | E11.9          | Outpatient
+ENC-982012   | PAT-04289  | Babatunde Olatunji | 1991-03-25    | M      | 2026-08-18 13:50:00 | Emergency Room    | PRV-9012    | S82.101A       | Emergency
+ENC-982011   | PAT-88210  | Ngozi Okafor       | 1968-09-17    | F      | 2026-08-18 13:20:00 | Internal Medicine | PRV-3310    | J45.909        | Inpatient
+ENC-982010   | PAT-15604  | Emmanuel Eze       | 2001-12-08    | M      | 2026-08-18 12:45:00 | Pulmonology       | PRV-7741    | J18.9          | Outpatient
+-------------------------------------------------------------------------------
+Total Synchronized Rows Returned : 1,184,200
+Total Execution Runtime          : 18.412 ms
+===============================================================================
