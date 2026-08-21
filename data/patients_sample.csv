@@ -1,0 +1,9 @@
+patient_id,first_name,last_name,date_of_birth,gender,blood_group,record_status
+PAT-10482,Chioma,Adeleke,1984-06-12,F,O+,ACTIVE
+PAT-30911,Ibrahim,Musa,1972-11-03,M,A+,ACTIVE
+PAT-04289,Babatunde,Olatunji,1991-03-25,M,B+,ACTIVE
+PAT-88210,Ngozi,Okafor,1968-09-17,F,AB+,ACTIVE
+PAT-15604,Emmanuel,Eze,2001-12-08,M,O-,ACTIVE
+PAT-55201,Amara,Kalu,1995-04-19,F,A-,ACTIVE
+PAT-99104,Tunde,Bakare,1980-01-30,M,O+,ACTIVE
+PAT-77312,Fatima,Abubakar,1999-07-22,F,B-,INACTIVE
